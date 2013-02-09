@@ -8,4 +8,4 @@ target/
 .settings/
 *Thrash
 bin/*
-
+*.DS_Store
