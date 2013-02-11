@@ -7,5 +7,6 @@ target/
 .project
 .settings/
 *Thrash
-bin/*
 *.DS_Store
+*.class
+bin/*

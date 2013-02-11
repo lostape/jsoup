@@ -188,6 +188,125 @@ public class JsoupTest {
 		assertEquals("nospacebetweenattributes",p.body().child(0).attr("id"));
 	}
 	
+	//Valid HTML Tests
+	@Test
+	public void regularvalidhtmlTest() throws IOException{
+		File plaintext = new File("testres/validhtml/regularvalidhtmldoc.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		assertEquals("html",p.child(0).tagName());
+		assertEquals("head",p.child(0).child(0).tagName());
+		assertEquals("title",p.head().child(0).tagName());
+		assertEquals("Regular HTML file, well formed",p.head().child(0).html());
+		
+		assertEquals("body",p.child(0).child(1).tagName());
+		assertEquals("p",p.body().child(0).tagName());
+		assertEquals("Regular paragraph in the body",p.body().child(0).html());
+		assertEquals("a",p.body().child(1).tagName());
+		assertEquals("http://www.google.ca",p.body().child(1).attr("href"));
+		assertEquals("Google",p.body().child(1).html());
+		assertEquals("h1",p.body().child(2).tagName());
+		assertEquals("Header",p.body().child(2).html());
+		//Check if 3rd element is div, discarding the comment
+		assertEquals("div",p.body().child(3).tagName());
+		assertEquals("span",p.body().child(3).child(0).tagName());
+		assertEquals("Section 1",p.body().child(3).child(0).html());
+	}
 	
+	@Test
+	public void nestedelementsTest() throws IOException{
+		File plaintext = new File("testres/validhtml/nestedelements.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//Check if table correctly parsed
+		assertEquals("table",p.body().child(0).tagName());
+		//Check if table headers parsed
+		assertEquals("tbody",p.body().child(0).child(0).tagName());
+		assertEquals("tr",p.body().child(0).child(0).child(0).tagName());
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C1",p.body().child(0).child(0).child(0).child(0).html());
+		
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C2",p.body().child(0).child(0).child(0).child(1).html());
+		
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C3",p.body().child(0).child(0).child(0).child(2).html());
+		
+		//Second Row contains a nested table
+		assertEquals("tr",p.body().child(0).child(0).child(1).tagName());
+		assertEquals("td",p.body().child(0).child(0).child(1).child(0).tagName());
+		//Check if table data, in fact, parses nested table correctly
+		assertEquals("table",p.body().child(0).child(0).child(1).child(0).child(0).tagName());
+		assertEquals("tbody",p.body().child(0).child(0).child(1).child(0).child(0).child(0).tagName());
+		assertEquals("tr",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).tagName());
+		assertEquals("<td>table</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(0).outerHtml());
+		assertEquals("<td>within</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(1).outerHtml());
+		assertEquals("<td>a</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(2).outerHtml());
+		assertEquals("<td><b>table</b></td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(3).outerHtml());
+		
+	}
+	
+	@Test
+	public void multipleattributesTest() throws IOException{
+		File plaintext = new File("testres/validhtml/multiattrelement.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+			
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("MultiAttribute element",p.body().child(0).attr("name"));
+		assertEquals("_top",p.body().child(0).attr("target"));
+	}
+	
+	@Test
+	public void singlesimpleelementTest() throws IOException{
+		File plaintext = new File("testres/validhtml/singleelement.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+			
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("Simple element, check to see if content is correct",p.body().child(0).html());
+	}
+	
+	@Test
+	public void emptytagTest() throws IOException{
+		File plaintext = new File("testres/validhtml/emptytag.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+			
+		assertEquals("table",p.body().child(0).tagName());
+		//Check if normalises element from empty tag to start tag and closing tag
+		assertEquals("<table></table>",p.body().child(0).outerHtml());
+		assertEquals("",p.body().child(0).html());
+	}
+	
+	@Test
+	public void formattingtagsTest() throws IOException{
+		File plaintext = new File("testres/validhtml/formattingtags.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+			
+		assertEquals("p",p.body().child(0).tagName());
+		//Keeps formatting tags and doesn't discard them
+		assertEquals("b",p.body().child(0).child(0).tagName());
+		assertEquals("bold text and <i>emphasize</i> some words",p.body().child(0).child(0).html());
+		assertEquals("i",p.body().child(0).child(0).child(0).tagName());
+		assertEquals("emphasize",p.body().child(0).child(0).child(0).html());
+	}
+	
+	@Test
+	public void singlequotesforattrTest() throws IOException{
+		File plaintext = new File("testres/validhtml/singlequotedattrelement.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+			
+		assertEquals("a",p.body().child(0).tagName());
+		//check if correctly parses attribute
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		//check if normalises to double quotations
+		assertEquals("<a href=\"http://www.google.ca\">Single Quoted</a>",p.body().child(0).outerHtml());
+	}
 	
 }
