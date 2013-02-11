@@ -7,4 +7,6 @@ target/
 .project
 .settings/
 *Thrash*
-
+*.class
+bin/org/jsoup/*.class
+bin/org/jsoup/*/*.class
