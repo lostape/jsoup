@@ -6,7 +6,11 @@ target/
 .classpath
 .project
 .settings/
+<<<<<<< HEAD
 *Thrash*
 *.class
 bin/org/jsoup/*.class
 bin/org/jsoup/*/*.class
+*Thrash
+bin/*
+*.DS_Store
