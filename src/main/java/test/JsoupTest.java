@@ -93,5 +93,101 @@ public class JsoupTest {
 		
 	}
 	
+	@Test
+	public void wrongclosingtagTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/wrongclosingtagname.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//check if changes wrong closing tag name to the correct one
+		assertEquals("h1",p.body().child(0).tagName());
+		assertEquals("<h1>Wrong closing tag name</h1>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void invalidclosingtagsyntaxTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/invalidclosingtag.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//check if closes unclosed ending tag, add missing closing tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("Invalid closing\n<div></div>",p.body().child(0).html());
+		assertEquals("div",p.body().child(0).child(0).tagName());
+	}
+	
+	@Test
+	public void missingclosingtagTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/missingclosingtag.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//check if adds missing closing tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("<div>\n Missing closing tag\n</div>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void unclosedclosingtagTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/unclosedclosingtag.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//check if closes unclosed ending tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("<div>\n Unclosed closing tag\n</div>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void contentinemptytagTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/contentinsideemptytag.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//check if changes content inside start tag to attributes
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("",p.body().child(0).attr("content"));
+		assertEquals("",p.body().child(0).attr("inside"));
+		assertEquals("",p.body().child(0).attr("again,"));
+		assertEquals("",p.body().child(0).attr("different"));
+		assertEquals("",p.body().child(0).attr("closing"));
+		assertEquals("",p.body().child(0).attr("mechanism"));
+	}
+	
+	@Test
+	public void missingclosingquoteonattributeTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/missingendquote.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//Check if correctly discards tag with no closing quote on one attribute value
+		assertEquals("",p.body().html());
+	}
+	
+	@Test
+	public void noquotationsforattrvaluesTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/noquotesforattr.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//Check if correctly parses attribute values even with no quotations
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("noquotesforvalue",p.body().child(0).attr("id"));
+	}
+	
+	@Test
+	public void nospacesbetweenattributesTest() throws IOException{
+		File plaintext = new File("testres/invalidhtml/nospacebetweenattr.html");
+		//Takes invalid text and normalizes into correct html file
+		Document p = Jsoup.parse(plaintext, "UTF-8");
+		
+		//Check if correctly parses attribute values even with no spaces between attributes
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("nospacebetweenattributes",p.body().child(0).attr("id"));
+	}
+	
+	
 	
 }
