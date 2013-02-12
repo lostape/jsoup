@@ -3,11 +3,23 @@ package test;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.List;
 
-
-import org.jsoup.*;
+import org.jsoup.Jsoup;
+import org.jsoup.helper.StringUtil;
+import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.parser.ParseError;
+import org.jsoup.parser.Parser;
+import org.jsoup.parser.XmlTreeBuilder;
+import org.jsoup.select.Elements;
 import org.junit.Test;
 
 public class JsoupTest {
@@ -308,5 +320,546 @@ public class JsoupTest {
 		//check if normalises to double quotations
 		assertEquals("<a href=\"http://www.google.ca\">Single Quoted</a>",p.body().child(0).outerHtml());
 	}
+	
+	//Yang's Stuff
+	/*
+	 * 2.    static Document 	parse(String html)
+              Parse HTML into a Document.
+
+	 */
+	//Part I: Valid HTML String Tests
+	@Test public void parsesComments() {
+        String html="<html><head><title>Regular HTML file, well formed</title></head><body>"+
+				"<p>Regular paragraph in the body</p>" +
+				"<a href=\"http://www.google.ca\">Google</a>" +
+				"<h1>Header</h1>" +
+				"<!--Comment: Let's try some sections nested here-->"+
+				"<div><span>Section 1</span><span>Section 2</span></div></body></html>";
+		Document p = Jsoup.parse(html);
+
+        Element body = p.body();
+        Comment comment = (Comment) body.childNode(3); // comment should not be sub of img, as it's an empty tag
+        assertEquals("Comment: Let's try some sections nested here", comment.getData());
+        Element e = body.child(0);
+        TextNode text = (TextNode) e.childNode(0);
+        assertEquals("Regular paragraph in the body", text.getWholeText());
+    }
+    
+	@Test
+	public void regularvalidhtmlStringTest() throws IOException{
+		String html="<html><head><title>Regular HTML file, well formed</title></head><body>"+
+				"<p>Regular paragraph in the body</p>" +
+				"<a href=\"http://www.google.ca\">Google</a>" +
+				"<h1>Header</h1>" +
+				"<!--Comment: Let's try some sections nested here-->"+
+				"<div><span>Section 1</span><span>Section 2</span></div></html>";
+		Document p = Jsoup.parse(html);
+
+		assertEquals("html",p.child(0).tagName());
+		assertEquals("head",p.child(0).child(0).tagName());
+		assertEquals("title",p.head().child(0).tagName());
+		assertEquals("Regular HTML file, well formed",p.head().child(0).html());
+
+		assertEquals("body",p.child(0).child(1).tagName());
+		assertEquals("p",p.body().child(0).tagName());
+		assertEquals("Regular paragraph in the body",p.body().child(0).html());
+		assertEquals("a",p.body().child(1).tagName());
+		assertEquals("http://www.google.ca",p.body().child(1).attr("href"));
+		assertEquals("Google",p.body().child(1).html());
+		assertEquals("h1",p.body().child(2).tagName());
+		assertEquals("Header",p.body().child(2).html());
+		//	Check if 3rd element is div, discarding the comment
+		assertEquals("div",p.body().child(3).tagName());
+		assertEquals("span",p.body().child(3).child(0).tagName());
+		assertEquals("Section 1",p.body().child(3).child(0).html());
+	}
+	
+	@Test
+	public void nestedelementsStringTest() throws IOException{
+		String html="<table border=\"1\"><tr><th>C1</th><th>C2</th><th>C3<th></tr>"+
+					"<tr><td>	<table border=\"2\">"+
+					"<tr>	<td>table</td>	<td>within</td>	<td>a</td>	<td><b>table</b></td>	</tr>	<tr/>"+
+					"</table></td>"+
+					"<td>data1</td><td>data2</td></tr></table>";
+		Document p = Jsoup.parse(html);
+
+		//Check if table correctly parsed
+		assertEquals("table",p.body().child(0).tagName());
+		//Check if table headers parsed
+		assertEquals("tbody",p.body().child(0).child(0).tagName());
+		assertEquals("tr",p.body().child(0).child(0).child(0).tagName());
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C1",p.body().child(0).child(0).child(0).child(0).html());
+
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C2",p.body().child(0).child(0).child(0).child(1).html());
+
+		assertEquals("th",p.body().child(0).child(0).child(0).child(0).tagName());
+		assertEquals("C3",p.body().child(0).child(0).child(0).child(2).html());
+
+		//	Second Row contains a nested table
+		assertEquals("tr",p.body().child(0).child(0).child(1).tagName());
+		assertEquals("td",p.body().child(0).child(0).child(1).child(0).tagName());
+		//Check if table data, in fact, parses nested table correctly
+		assertEquals("table",p.body().child(0).child(0).child(1).child(0).child(0).tagName());
+		assertEquals("tbody",p.body().child(0).child(0).child(1).child(0).child(0).child(0).tagName());
+		assertEquals("tr",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).tagName());
+		assertEquals("<td>table</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(0).outerHtml());
+		assertEquals("<td>within</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(1).outerHtml());
+		assertEquals("<td>a</td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(2).outerHtml());
+		assertEquals("<td><b>table</b></td>",p.body().child(0).child(0).child(1).child(0).child(0).child(0).child(0).child(3).outerHtml());
+
+	}
+
+	
+
+	@Test
+	public void multipleattributesStringTest() throws IOException{
+		String html="<a href=\"http://www.google.ca\" name=\"MultiAttribute element\" target=\"_top\">Multiattribute link</a>";
+		Document p = Jsoup.parse(html);
+
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("MultiAttribute element",p.body().child(0).attr("name"));
+		assertEquals("_top",p.body().child(0).attr("target"));
+	}
+
+	@Test
+	public void singlesimpleelementStringTest() throws IOException{
+		String html="<a href=\"www.example.ca\">Simple element, check to see if content is correct</a>";
+		Document p = Jsoup.parse(html);
+
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("Simple element, check to see if content is correct",p.body().child(0).html());
+	}
+
+	@Test
+	public void emptytagStringTest() throws IOException{
+		String html="<table/>";
+		Document p = Jsoup.parse(html);
+
+		assertEquals("table",p.body().child(0).tagName());
+		//Check if normalises element from empty tag to start tag and closing tag
+		assertEquals("<table></table>",p.body().child(0).outerHtml());
+		assertEquals("",p.body().child(0).html());
+	}
+
+	@Test
+	public void formattingtagsStringTest() throws IOException{
+		String html="<p>What happens when I <b>bold text and <i>emphasize</i> some words</b></p>";
+		Document p = Jsoup.parse(html);
+
+		assertEquals("p",p.body().child(0).tagName());
+		//Keeps formatting tags and doesn't discard them
+		assertEquals("b",p.body().child(0).child(0).tagName());
+		assertEquals("bold text and <i>emphasize</i> some words",p.body().child(0).child(0).html());
+		assertEquals("i",p.body().child(0).child(0).child(0).tagName());
+		assertEquals("emphasize",p.body().child(0).child(0).child(0).html());
+	}
+
+	@Test
+	public void singlequotesforattrStringTest() throws IOException{
+		String html="<a href='http://www.google.ca'>Single Quoted</a>";
+		
+		Document p = Jsoup.parse(html);
+
+		assertEquals("a",p.body().child(0).tagName());
+		//check if correctly parses attribute
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		//check if normalises to double quotations
+		assertEquals("<a href=\"http://www.google.ca\">Single Quoted</a>",p.body().child(0).outerHtml());
+	}
+
+	//Part II: invalid HTML String Paser Tests
+	@Test public void parsesUnterminatedComments() {
+        String html="<html><head><title>Regular HTML file, well formed</title></head><body>"+
+				"<p>Regular paragraph in the body</p>" +
+				"<a href=\"http://www.google.ca\">Google</a>" +
+				"<h1>Header</h1>" +
+				"<div><span>Section 1</span>"+
+				"<!--Comment: Let's try some sections nested in a division";
+		Document doc = Jsoup.parse(html);
+
+        Element p = doc.getElementsByTag("div").get(0);
+        assertEquals("Section 1", p.text());
+        Comment comment = (Comment) p.childNode(1);
+        assertEquals("Comment: Let's try some sections nested in a division", comment.getData());
+    }
+
+	
+	@Test
+	public void plaintextStringTest() throws IOException{
+		String html="Let's see how Jsoup parses this! Plain text, invalid html document.";
+		Document p = Jsoup.parse(html);
+		
+		//Check if created head tags
+		assertEquals("<head></head>",p.child(0).child(0).toString());
+		//Check to see if body was created
+		assertEquals("body", p.child(0).child(1).tagName());
+		//Get inner html of body tag
+		assertEquals("Let's see how Jsoup parses this! Plain text, invalid html document.",p.child(0).child(1).html());
+	}
+	
+	@Test
+	public void missingheadStringTest() throws IOException{
+		String html="<html><body><title>Hey, I am the headless html!</title>"+
+					"<p>Some paragraphs</p>"+
+					"<p>Some of the parts of my head are in my body! What, again?!</p>"+
+					"</body></html>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if created head tags
+		assertEquals("head",p.child(0).child(0).tagName());
+		
+		//Check to see if body was created
+		assertEquals("body", p.body().tagName());
+		//Check if tags in body were parsed
+		assertEquals("title",p.body().child(0).tagName());
+		assertEquals("Hey, I am the headless html!",p.body().child(0).html());
+		assertEquals("p",p.body().child(1).tagName());
+		assertEquals("Some paragraphs",p.body().child(1).html());
+	}
+	
+	@Test
+	public void missinghtmltagStringTest() throws IOException{
+		String html="<head><title>Missing html tag</title>"+
+					"</head><body><p>Straight into the head and the body, no html tag</p>"+
+					"</body>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if created html tags
+		assertEquals("html",p.child(0).tagName());
+		
+		//Check if head elements were put into html tag
+		assertEquals("head",p.child(0).child(0).tagName());
+		//Check to see if body was created
+		assertEquals("body", p.child(0).child(1).tagName());
+		assertEquals("Straight into the head and the body, no html tag", p.child(0).child(1).child(0).html());
+	
+	}
+	
+	@Test
+	public void missingbodyStringTest() throws IOException{
+		String html="<html><head><title>Missing Body</title>"+
+					"Data right in the head. Not in the body. Let's add some tags that usually go into the missing body."+
+					"<p>Hello, My body is in my head. What?!</p>"+
+					"<p>That should be enough<p>"+
+					"<head/></html>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if head parsed
+		assertEquals("head",p.child(0).child(0).tagName());
+		assertEquals("title",p.head().child(0).tagName());
+		//Check if body was created and elements in head were correctly put into body
+		assertEquals("body",p.child(0).child(1).tagName());
+		assertEquals("p",p.child(0).child(1).child(0).tagName());
+		assertEquals("Hello, My body is in my head. What?!",p.child(0).child(1).child(0).html());
+	}
+	
+	@Test
+	public void interlockingtagsStringTest() throws IOException{
+		String html="<div>I'm a heading!"+
+					"<p>Interlocking Tags, first paragraph <a href=\"http://google.ca\"> Still in </div>"+
+					"first paragraph!</p> Link To Google!</a>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if correctly parses first child in body
+		assertEquals("div",p.body().child(0).tagName());
+		//Check if correctly parses first nested tag
+		assertEquals("p",p.body().child(0).child(0).tagName());
+		//Check if correctly recognizes interlocking and replaces </div> with </a>
+		assertEquals("Interlocking Tags, first paragraph <a href=\"http://google.ca\"> Still in </a>",p.body().child(0).child(0).html());
+	
+	}
+	
+	@Test
+	public void wrongclosingtagStringTest() throws IOException{
+		String html="<h1>Wrong closing tag name</a>";
+		Document p = Jsoup.parse(html);
+		
+		//check if changes wrong closing tag name to the correct one
+		assertEquals("h1",p.body().child(0).tagName());
+		assertEquals("<h1>Wrong closing tag name</h1>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void invalidclosingtagsyntaxStringTest() throws IOException{
+		String html="<div>Invalid closing<div>";
+		Document p = Jsoup.parse(html);
+		
+		//check if closes unclosed ending tag, add missing closing tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("Invalid closing\n<div></div>",p.body().child(0).html());
+		assertEquals("div",p.body().child(0).child(0).tagName());
+	}
+	
+	@Test
+	public void missingclosingtagStringTest() throws IOException{
+		String html="<div>Missing closing tag";
+		Document p = Jsoup.parse(html);
+		
+		//check if adds missing closing tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("<div>\n Missing closing tag\n</div>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void unclosedclosingtagStringTest() throws IOException{
+		String html="<div>Unclosed closing tag</div";
+		Document p = Jsoup.parse(html);
+		
+		//check if closes unclosed ending tag
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("<div>\n Unclosed closing tag\n</div>",p.body().child(0).outerHtml());
+	}
+	
+	@Test
+	public void contentinemptytagStringTest() throws IOException{
+		String html="<div Content inside again, different closing mechanism />";
+		Document p = Jsoup.parse(html);
+		
+		//check if changes content inside start tag to attributes
+		assertEquals("div",p.body().child(0).tagName());
+		assertEquals("",p.body().child(0).attr("content"));
+		assertEquals("",p.body().child(0).attr("inside"));
+		assertEquals("",p.body().child(0).attr("again,"));
+		assertEquals("",p.body().child(0).attr("different"));
+		assertEquals("",p.body().child(0).attr("closing"));
+		assertEquals("",p.body().child(0).attr("mechanism"));
+	}
+	
+	@Test
+	public void missingclosingquoteonattributeStringTest() throws IOException{
+		String html="<a href=\"http://www.google.ca\" id=\"missingendquote>No space between attributes</a>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if correctly discards tag with no closing quote on one attribute value
+		assertEquals("",p.body().html());
+	}
+	
+	@Test
+	public void noquotationsforattrvaluesStringTest() throws IOException{
+		String html="<a href=http://www.google.ca id=noquotesforvalue>No quotes for attribute value</a>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if correctly parses attribute values even with no quotations
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("noquotesforvalue",p.body().child(0).attr("id"));
+	}
+	
+	@Test
+	public void nospacesbetweenattributesStringTest() throws IOException{
+		String html="<a href=\"http://www.google.ca\"id=\"nospacebetweenattributes\">No space between attributes</a>";
+		Document p = Jsoup.parse(html);
+		
+		//Check if correctly parses attribute values even with no spaces between attributes
+		assertEquals("a",p.body().child(0).tagName());
+		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
+		assertEquals("nospacebetweenattributes",p.body().child(0).attr("id"));
+	}
+	
+	
+	/*
+	 * 3.    static Document 	parse(String html, String baseUri)
+     			Parse HTML into a Document.
+     */
+    @Test public void BaseTagsStringBaseURITest() {
+        // only listen to the first base href
+        String h = "<a href=level1>#</a>"+
+        			"<base href='/level2/'>"+
+        			"<a href='level3'>#</a>"+
+        			"<base href='http://bar'>"+
+        			"<a href=/level4>#</a>";
+        Document doc = Jsoup.parse(h, "http://SENG437.com/");
+        assertEquals("http://SENG437.com/level2/", doc.baseUri()); // gets set once, so doc and descendants have first only
+
+        Elements anchors = doc.getElementsByTag("a");
+        assertEquals(3, anchors.size());
+
+        assertEquals("http://SENG437.com/level2/", anchors.get(0).baseUri());
+        assertEquals("http://SENG437.com/level2/", anchors.get(1).baseUri());
+        assertEquals("http://SENG437.com/level2/", anchors.get(2).baseUri());
+
+        assertEquals("http://SENG437.com/level2/level1", anchors.get(0).absUrl("href"));
+        assertEquals("http://SENG437.com/level2/level3", anchors.get(1).absUrl("href"));
+        assertEquals("http://SENG437.com/level4", anchors.get(2).absUrl("href"));
+    }
+    
+    @Test public void BaseTagsWithoutHrefStringBaseURITest() {
+        String h = "<body><a href=/test>Test</a></body>";
+        Document doc = Jsoup.parse(h, "http://SENG437.com/");
+        Element a = doc.select("a").first();
+        assertEquals("/test", a.attr("href"));
+        assertEquals("http://SENG437.com/test", a.attr("abs:href"));
+    }	
+    
+    /* Target 4:
+     *  	 static Document 	parse(String html, String baseUri, Parser parser)
+    		 	Parse HTML into a Document, using the provided Parser.
+     */	
+	@Test
+	public void htmlParserStringTest() throws IOException{
+		String html="<html><head><title>Regular HTML file, well formed</title></head><body>"+
+				"<p>Regular paragraph in the body</p>" +
+				"<h1>Header</h1>" +
+				"<!--Comment: Let's try some sections nested here-->"+
+				"<div><span>Section 1</span><span>Section 2</span></div></html>";
+		Parser parser = Parser.htmlParser();
+		Document p = Jsoup.parse(html,"http://SENG437.com",parser);
+
+		assertEquals("html",p.child(0).tagName());
+		assertEquals("head",p.child(0).child(0).tagName());
+		assertEquals("title",p.head().child(0).tagName());
+		assertEquals("Regular HTML file, well formed",p.head().child(0).html());
+
+		assertEquals("body",p.child(0).child(1).tagName());
+		assertEquals("p",p.body().child(0).tagName());
+		assertEquals("Regular paragraph in the body",p.body().child(0).html());
+		assertEquals("h1",p.body().child(1).tagName());
+		assertEquals("Header",p.body().child(1).html());
+		//	Check if 3rd element is div, discarding the comment
+		assertEquals("div",p.body().child(2).tagName());
+		assertEquals("span",p.body().child(2).child(0).tagName());
+		assertEquals("Section 1",p.body().child(2).child(0).html());
+
+        List<ParseError> errors = parser.getErrors();
+        assertEquals(0, errors.size());
+
+	}
+	  
+    
+    @Test public void tracksErrors() {
+        String html = "<p>One</p href='no'><!DOCTYPE html>&arrgh;<font /><br /><foo";
+        Parser parser = Parser.htmlParser().setTrackErrors(500);
+        Jsoup.parse(html, "http://SENG437.com", parser);
+        
+        List<ParseError> errors = parser.getErrors();
+        assertEquals(5, errors.size());
+        assertEquals("20: Attributes incorrectly present on end tag", errors.get(0).toString());
+        assertEquals("35: Unexpected token [Doctype] when in state [InBody]", errors.get(1).toString());
+        assertEquals("36: Invalid character reference: invalid named referenece 'arrgh'", errors.get(2).toString());
+        assertEquals("50: Self closing flag not acknowledged", errors.get(3).toString());
+        assertEquals("61: Unexpectedly reached end of file (EOF) in input state [TagName]", errors.get(4).toString());
+    }
+    
+    
+    @Test
+    public void XmlParser() {
+        String xml = "<doc><val>A<val>B</val></bar>C</doc>";
+        Document doc = Jsoup.parse(xml, "http://SENG437.com/", Parser.xmlParser());
+        assertEquals("<doc><val>A<val>B</val>C</val></doc>",
+        doc.html().replaceAll("\\n\\s*", ""));
+    }
+    
+    @Test
+    public void NoSelfClosingKnownTags() {
+        Document html = Jsoup.parse("<br>A</br>");
+        assertEquals("<br />A\n<br />", html.body().html());
+
+        Document xml = Jsoup.parse("<br>A</br>", "", Parser.xmlParser());
+        assertEquals("<br>A</br>", xml.html());
+    }
+    
+    @Test public void XmlDeclaration() {
+        String html = "<?xml encoding='UTF-8' ?><body>One</body><!-- comment -->";
+        Document doc = Jsoup.parse(html, "", Parser.xmlParser());
+        assertEquals("<?xml encoding='UTF-8' ?> <body> One </body> <!-- comment -->",
+                StringUtil.normaliseWhitespace(doc.outerHtml()));
+        assertEquals("#declaration", doc.childNode(0).nodeName());
+        assertEquals("#comment", doc.childNode(2).nodeName());
+    }
+    
+	/* Target:
+	 *	1.    static Document 	parse(InputStream in, String charsetName, String baseUri, Parser parser)
+    			Read an input stream, and parse it to a Document.
+	 */
+    @Test
+    public void ParserToStream() throws IOException, URISyntaxException {
+        File xmlFile = new File(XmlTreeBuilder.class.getResource("testres/validhtml/test.xml").toURI());
+        InputStream inStream = new FileInputStream(xmlFile);
+        Document doc = Jsoup.parse(inStream, null, "http://SENG437.com", Parser.xmlParser());
+        assertEquals("<doc><val>A<val>B</val>C</val></doc>",
+         doc.html().replaceAll("\\n\\s*", ""));
+    }
+
+    
+    
+    
+    
+    /* Target 5:
+     * static Document 	parse(URL url, int timeoutMillis)
+          Fetch a URL, and parse it as HTML.
+
+     */
+    @Test public void ParseUrlwithinTimeout() throws IOException{
+        String url = "http://web.mit.edu/esg/www_pre2005/sample.html"; // no trailing / to force redir
+        Document doc = Jsoup.parse(new URL(url), 10*1000);
+        assertEquals(doc.title(),"This is an example of HTML");
+        assertEquals("This is a HUGE heading",doc.body().child(0).html());
+        assertEquals("This is a BIG heading",doc.body().child(1).html());
+        assertEquals("This is a LARGE heading",doc.body().child(2).html());
+        assertEquals("HTML stands for HyperText Markup Language. HTML documents are"+
+        			 " plain-text files that can be created using any text editor (such as"+
+        			 " emacs).",doc.body().child(3).html());
+    }	
+    	
+    
+    /* Target:
+     * 6.    static Document 	parseBodyFragment(String bodyHtml)
+    			Parse a fragment of HTML, with the assumption that it forms the body of the HTML.
+     */
+    @Test public void InlineTags() {
+        String h = "<p><cust>Test</cust></p><p><cust><cust>Test</cust></cust></p>";
+        Document doc = Jsoup.parseBodyFragment(h);
+        String out = doc.body().html();
+        assertEquals(h,out.replaceAll("\\n\\s*", ""));
+    }
+    @Test public void CommentsInTable() {
+        String html = "<table><tr><td>text</td><!-- Comment --></tr></table>";
+        Document node = Jsoup.parseBodyFragment(html);
+        assertEquals("<html><head></head><body><table><tbody><tr><td>text</td>"+
+        			"<!-- Comment --></tr></tbody></table></body></html>", node.outerHtml().replaceAll("\\n\\s*", ""));
+    }
+    @Test public void QuotesInCommentsInScripts() {
+        String html = "<script>\n" +
+                "  <!--\n" +
+                "    document.write('</scr' + 'ipt>');\n" +
+                "  // -->\n" +
+                "</script>";
+        Document node = Jsoup.parseBodyFragment(html);
+        assertEquals("<script>\n" +
+                "  <!--\n" +
+                "    document.write('</scr' + 'ipt>');\n" +
+                "  // -->\n" +
+                "</script>", node.body().html());
+    }
+
+    
+    
+    /*
+     * 7.    static Document 	parseBodyFragment(String bodyHtml, String baseUri)
+    			Parse a fragment of HTML, with the assumption that it forms the body of the HTML.
+    */
+    @Test public void parsesBodyFragmentTest() {
+        String h = "<!-- comment --><p><a href='abc'>One</a></p>";
+        Document doc = Jsoup.parseBodyFragment(h, "http://SENG437.com");
+        assertEquals("<body><!-- comment --><p><a href=\"abc\">One</a></p></body>", doc.body().outerHtml().replaceAll("\\n\\s*", ""));
+        assertEquals("http://SENG437.com/abc", doc.select("a").first().absUrl("href"));
+    }
+
+  
+    
+    @Test public void tracksLimitedErrors() {
+        String html = "<p>One</p href='no'><!DOCTYPE html>&arrgh;<font /><br /><foo";
+        Parser parser = Parser.htmlParser().setTrackErrors(3);
+        parser.parseInput(html, "http://SENG437.com");
+
+        List<ParseError> errors = parser.getErrors();
+        assertEquals(3, errors.size());
+        assertEquals("20: Attributes incorrectly present on end tag", errors.get(0).toString());
+        assertEquals("35: Unexpected token [Doctype] when in state [InBody]", errors.get(1).toString());
+        assertEquals("36: Invalid character reference: invalid named referenece 'arrgh'", errors.get(2).toString());
+    }
 	
 }
