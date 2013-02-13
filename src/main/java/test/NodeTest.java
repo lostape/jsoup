@@ -194,7 +194,7 @@ public class NodeTest {
 		// Some children
 		Document children = Jsoup
 				.parseBodyFragment("<div></div><p></p><a></a>");
-		List<Node> listNodes = new ArrayList<>();
+		List<Node> listNodes = new ArrayList<Node>();
 		listNodes.add(children.body().childNode(0));
 		listNodes.add(children.body().childNode(1));
 		listNodes.add(children.body().childNode(2));
