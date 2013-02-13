@@ -1,5 +1,6 @@
 package test;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.ParseError;
 import org.jsoup.parser.Parser;
 import org.jsoup.parser.XmlTreeBuilder;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.junit.Test;
 
@@ -320,6 +322,7 @@ public class JsoupTest {
 		//check if normalises to double quotations
 		assertEquals("<a href=\"http://www.google.ca\">Single Quoted</a>",p.body().child(0).outerHtml());
 	}
+	
 	
 	//Yang's Stuff
 	/*
@@ -861,5 +864,770 @@ public class JsoupTest {
         assertEquals("35: Unexpected token [Doctype] when in state [InBody]", errors.get(1).toString());
         assertEquals("36: Invalid character reference: invalid named referenece 'arrgh'", errors.get(2).toString());
     }
+    
+  //Jsoup.clean() tests
+	
+    //Whitelist.none()
+  	@Test
+  	public void cleanNoneWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some text, making sure the cleaner doesn't remove any stuff.";
+  		String p = Jsoup.clean(html, Whitelist.none());
+  		//check if clean() keeps all text, removing nothing
+  		assertEquals("Some text, making sure the cleaner doesn't remove any stuff.",p);
+  	}
+  	
+  	@Test
+  	public void isvalidNoneWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some text, making sure the cleaner doesn't remove any stuff.";
+  		//checks if there is no html tags, and is valid.
+  		assertTrue(Jsoup.isValid(html, Whitelist.none()));
+  	}
+  	
+  	@Test
+  	public void cleanNoneWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "<head><title>A Text Title.</title></head><body><p> A paragraph of text.</p></body>";
+  		String p = Jsoup.clean(html, Whitelist.none());
+  		//check if clean() removes the html tags and keeps the text.
+  		assertEquals("A Text Title. A paragraph of text.",p);
+  	}
+  	
+  	@Test
+  	public void isvalidNoneWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "<head><title>A Text Title.</title></head><body><p> A paragraph of text.</p></body>";
+  		//checks if there is no html tags, and is valid.
+  		assertFalse(Jsoup.isValid(html, Whitelist.none()));
+  	}
+  	
+  	//Whitelist.simpleText()
+  	@Test
+  	public void cleanSimpleTextWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some \n<b>text</b>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.";
+  		String p = Jsoup.clean(html, Whitelist.simpleText());
+  		//check if clean() keeps all text, removing nothing
+  		assertEquals("Some \n<b>text</b>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.",p);
+  	}
+  	
+  	@Test
+  	public void isvalidSimpleTextWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some \n<B>text</B>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.";
+  		//checks if there is no html tags, and is valid.
+  		assertTrue(Jsoup.isValid(html, Whitelist.simpleText()));
+  	}
+  	
+  	@Test
+  	public void cleanSimpleTextWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "<head>A Head</head> <body>A Body</body> \n<b>text</b>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.";
+  		String p = Jsoup.clean(html, Whitelist.simpleText());
+  		//check if clean() keeps all valid html text, removing invalid html
+  		assertEquals("A Head A Body \n<b>text</b>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.",p);
+  	}
+  	
+  	@Test
+  	public void isvalidSimpleTextWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "<head>A Head</head> <body>A Body</body> \n<b>text</b>, \n<em>making</em> \n<i>sure</i> the \n<strong>cleaner</strong> \n<u>doesn't</u> remove any stuff.";
+  		//checks if there is invalid html tags, thus will be invalid
+  		assertFalse(Jsoup.isValid(html, Whitelist.simpleText()));
+  	}
+  	
+  	//Whitelist.basic()
+  	@Test
+  	public void cleanBasicWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.basic(),new Document.OutputSettings().prettyPrint(false));
+  		
+  		//check if clean() keeps all text, removing nothing and adds enforced attributes
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>",p);
+  	}
+  	
+  	@Test
+  	public void isvalidBasicWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>";
+  		//checks if there is no html tags, and is valid.
+  		assertTrue(Jsoup.isValid(html, Whitelist.basic()));
+  	}
+  	
+  	@Test
+  	public void cleanBasicWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Tags that are not allowed for the current whitelist, should be removed or modified
+  				"<malicious>I should be removed</malicious>" +
+  				"<img>A tag from a basicWithImages Whitelist</img>" +
+  				"<a name=\"thisattributeisnotallowed\">badlink</a>" +
+  				"<a href=\"badprotocal://google.ca\">badprotocol</a>";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.basic(),new Document.OutputSettings().prettyPrint(false));
+  		//check if clean() keeps all valid html text, removing invalid html
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Tags that are not allowed for the current whitelist and are removed or modified
+  				"I should be removed" +
+  				"A tag from a basicWithImages Whitelist" +
+  				"<a rel=\"nofollow\">badlink</a>" +
+  				"<a rel=\"nofollow\">badprotocol</a>",p);
+  	}
+  	
+  	@Test
+  	public void isvalidBasicWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Tags that are not allowed for the current whitelist, should be removed or modified
+  				"<malicious>I should be removed</malicious>" +
+  				"<img>A tag from a basicWithImages Whitelist</img>" +
+  				"<a name=\"thisattributeisnotallowed\">badlink</a>" +
+  				"<a href=\"badprotocal://google.ca\">badprotocol</a>";
+  		//checks if there is invalid html tags, thus will be invalid
+  		assertFalse(Jsoup.isValid(html, Whitelist.basic()));
+  	}
+  	
+  //Whitelist.basicWithImages()
+  	@Test
+  	public void cleanBasicWithImagesWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.basicWithImages(),new Document.OutputSettings().prettyPrint(false));
+  		
+  		//check if clean() keeps all text, removing nothing and adds enforced attributes
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />",p);
+  	}
+  	
+  	@Test
+  	public void isvalidBasicWithImagesWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />";
+  		//checks if there is no html tags, and is valid.
+  		assertTrue(Jsoup.isValid(html, Whitelist.basicWithImages()));
+  	}
+  	
+  	@Test
+  	public void cleanBasicWithImagesWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//Disallowed tags and img tags with disallowed attributes
+  				"<malicious>tag</malicious>" +
+  				"<img name=\"notallowed\" id=\"image1\" align=\"left\" />";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.basicWithImages(),new Document.OutputSettings().prettyPrint(false));
+  		//check if clean() keeps all valid html text, removing invalid html
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+				//Disallowed tags and img tags with disallowed attributes
+  				"tag" +
+				"<img align=\"left\" />",p);
+  	}
+  	
+  	@Test
+  	public void isvalidBasicWithImagesWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//Disallowed tags and img tags with disallowed attributes
+  				"<malicious>tag</malicious>" +
+  				"<img name=\"notallowed\" id=\"image1\" align=\"left\" />";
+  		//checks if there is invalid html tags, thus will be invalid
+  		assertFalse(Jsoup.isValid(html, Whitelist.basicWithImages()));
+  	}
+  	
+  //Whitelist.relaxed()
+  	@Test
+  	public void cleanRelaxedWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				//Added attributes to ol
+  				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				//Added attributes to ul
+  				"<ul type=\"chaos\">unordered</ul>" +
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//More tags and attributes allowed in relaxed mode
+  				"<caption>sentence</caption>" +
+  				"<div>division</div>" +
+  				"<h1>header1</h1>" +
+  				"<h2>header1</h2>" +
+  				"<h3>header1</h3>" +
+  				"<h4>header1</h4>" +
+  				"<h5>header1</h5>" +
+  				"<h6>header1</h6>" +
+	  			//Table
+				"<table summary=\"data\" width=\"5\">" +
+				"<colgroup span=\"5\" width=\"5\">" +
+					"<col span=\"5\" width=\"5\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.relaxed(),new Document.OutputSettings().prettyPrint(false));
+  		
+  		//check if clean() keeps all text, removing nothing and adds enforced attributes
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				//Added attributes to ol
+				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				//Added attributes to ul
+				"<ul type=\"chaos\">unordered</ul>" +
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//More tags and attributes allowed in relaxed mode
+				"<caption>sentence</caption>" +
+				"<div>division</div>" +
+				"<h1>header1</h1>" +
+				"<h2>header1</h2>" +
+				"<h3>header1</h3>" +
+				"<h4>header1</h4>" +
+				"<h5>header1</h5>" +
+				"<h6>header1</h6>" +
+				//Table
+				"<table summary=\"data\" width=\"5\">" +
+				"<colgroup span=\"5\" width=\"5\">" +
+					"<col span=\"5\" width=\"5\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+					"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>",p);
+  	}
+  	
+  	@Test
+  	public void isvalidRelaxedWhitelistValidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				//Added attributes to ol
+  				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				//Added attributes to ul
+  				"<ul type=\"chaos\">unordered</ul>" +
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//More tags and attributes allowed in relaxed mode
+  				//"<caption>sentence</caption>" +
+  				"<div>division</div>" +
+  				"<h1>header1</h1>" +
+  				"<h2>header1</h2>" +
+  				"<h3>header1</h3>" +
+  				"<h4>header1</h4>" +
+  				"<h5>header1</h5>" +
+  				"<h6>header1</h6>" +
+	  			//Table
+				"<table summary=\"data\" width=\"5\">" +
+				"<colgroup span=\"5\" width=\"5\">" +
+					"<col span=\"5\" width=\"5\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>";
+  		//checks if there is no html tags, and is valid.
+  		assertTrue(Jsoup.isValid(html, Whitelist.relaxed()));
+  	}
+  	
+  	@Test
+  	public void cleanRelaxedWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				//Added attributes to ol
+  				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				//"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				//Added attributes to ul
+  				"<ul type=\"chaos\">unordered</ul>" +
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//More tags and attributes allowed in relaxed mode
+  				//"<caption>sentence</caption>" +
+  				"<div>division</div>" +
+  				"<h1>header1</h1>" +
+  				"<h2>header1</h2>" +
+  				"<h3>header1</h3>" +
+  				"<h4>header1</h4>" +
+  				"<h5>header1</h5>" +
+  				"<h6>header1</h6>" +
+	  			//Table
+				"<table summary=\"data\" width=\"5\">" +
+				"<colgroup span=\"5\" width=\"5\">" +
+					"<col span=\"5\" width=\"5\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>" +
+				//Invalid tags while keeping valid ones
+				"<malicious>tag</malicious";
+  		
+  		String p = Jsoup.clean(html, "google.ca", Whitelist.relaxed(),new Document.OutputSettings().prettyPrint(false));
+  		//check if clean() keeps all valid html text, removing invalid html
+  		assertEquals("Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite=\"google.ca\">quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+				//Disallowed tags and img tags with disallowed attributes
+  				"tag" +
+				"<img align=\"left\" />",p);
+  	}
+  	
+  	@Test
+  	public void isvalidRelaxedWhitelistInvalidTagsTest() throws IOException{
+
+  		String html = "Some" +
+  				"<b>text</b>," +
+  				"<em>making</em>" +
+  				"<i>sure</i> the" +
+  				"<strong>cleaner</strong>" +
+  				"<u>doesn't</u> remove any stuff." +
+  				"<a href=\"https://www.google.ca\">google</a>" +
+  				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
+  				"A line break" +
+  				"<br />" +
+  				"<cite>Shakespeare</cite>" +
+  				"<code>Hello World</code>" +
+  				"<dd>A Definition</dd>" +
+  				"<dl>Definition list</dl>" +
+  				"<li>List</li>" +
+  				"<ol>Ordered List</ol>" +
+  				"<p>Paragraph</p>" +
+  				"<pre>preformatted</pre>" +
+  				"<q cite='google.ca'>quote</q>" +
+  				"<small>smalltext</small>" +
+  				"<strike>you're out!</strike>" +
+  				"<sub>zero</sub>" +
+  				"<sup>erman</sup>" +
+  				"<ul>unordered</ul>" +
+  				//Image Tag with allowed attributes and protocols
+  				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
+  				//Disallowed tags and img tags with disallowed attributes
+  				"<malicious>tag</malicious>" +
+  				"<img name=\"notallowed\" id=\"image1\" align=\"left\" />";
+  		//checks if there is invalid html tags, thus will be invalid
+  		assertFalse(Jsoup.isValid(html, Whitelist.relaxed()));
+  	}
+  	
 	
 }
