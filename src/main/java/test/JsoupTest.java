@@ -1348,7 +1348,7 @@ public class JsoupTest {
   				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				"<q cite=\"google.ca\">quote</q>" +
+  				"<q cite=\"http://www.google.ca\">quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
@@ -1357,7 +1357,7 @@ public class JsoupTest {
   				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
   				//More tags and attributes allowed in relaxed mode
-  				"<caption>sentence</caption>" +
+  				
   				"<div>division</div>" +
   				"<h1>header1</h1>" +
   				"<h2>header1</h2>" +
@@ -1367,6 +1367,7 @@ public class JsoupTest {
   				"<h6>header1</h6>" +
 	  			//Table
 				"<table summary=\"data\" width=\"5\">" +
+				"<caption>sentence</caption>" +
 				"<colgroup span=\"5\" width=\"5\">" +
 					"<col span=\"5\" width=\"5\" />" +
 				"</colgroup>" +
@@ -1405,7 +1406,7 @@ public class JsoupTest {
 				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				"<q cite=\"google.ca\">quote</q>" +
+  				"<q cite=\"http://www.google.ca\">quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
@@ -1414,7 +1415,6 @@ public class JsoupTest {
 				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
   				//More tags and attributes allowed in relaxed mode
-				"<caption>sentence</caption>" +
 				"<div>division</div>" +
 				"<h1>header1</h1>" +
 				"<h2>header1</h2>" +
@@ -1424,6 +1424,7 @@ public class JsoupTest {
 				"<h6>header1</h6>" +
 				//Table
 				"<table summary=\"data\" width=\"5\">" +
+				"<caption>sentence</caption>" +
 				"<colgroup span=\"5\" width=\"5\">" +
 					"<col span=\"5\" width=\"5\" />" +
 				"</colgroup>" +
@@ -1463,7 +1464,7 @@ public class JsoupTest {
   				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				"<q cite=\"google.ca\">quote</q>" +
+  				"<q cite=\"http://www.google.ca\">quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
@@ -1472,7 +1473,6 @@ public class JsoupTest {
   				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
   				//More tags and attributes allowed in relaxed mode
-  				//"<caption>sentence</caption>" +
   				"<div>division</div>" +
   				"<h1>header1</h1>" +
   				"<h2>header1</h2>" +
@@ -1482,6 +1482,7 @@ public class JsoupTest {
   				"<h6>header1</h6>" +
 	  			//Table
 				"<table summary=\"data\" width=\"5\">" +
+				"<caption>sentence</caption>" +
 				"<colgroup span=\"5\" width=\"5\">" +
 					"<col span=\"5\" width=\"5\" />" +
 				"</colgroup>" +
@@ -1523,7 +1524,8 @@ public class JsoupTest {
   				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				//"<q cite=\"google.ca\">quote</q>" +
+  				//disallowed protocol for q cite
+  				"<q cite=\"invalid://www.google.ca\">quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
@@ -1532,7 +1534,7 @@ public class JsoupTest {
   				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
   				//More tags and attributes allowed in relaxed mode
-  				//"<caption>sentence</caption>" +
+  				
   				"<div>division</div>" +
   				"<h1>header1</h1>" +
   				"<h2>header1</h2>" +
@@ -1542,6 +1544,7 @@ public class JsoupTest {
   				"<h6>header1</h6>" +
 	  			//Table
 				"<table summary=\"data\" width=\"5\">" +
+				"<caption>sentence</caption>" +
 				"<colgroup span=\"5\" width=\"5\">" +
 					"<col span=\"5\" width=\"5\" />" +
 				"</colgroup>" +
@@ -1557,8 +1560,29 @@ public class JsoupTest {
 					"</tbody>" +
 				"<tfoot>foottable</tfoot>" +
 				"</table>" +
-				//Invalid tags while keeping valid ones
-				"<malicious>tag</malicious";
+				//Invalid tags, attributes or protocols while keeping valid ones
+				"<malicious>tag</malicious>" +
+				//Invalid Table attributes
+				"<table summary=\"data\" width=\"5\" name\"table1\">" +
+				"<caption>sentence</caption>" +
+				"<colgroup span=\"5\" width=\"5\" id=\"columngroup\">" +
+					"<col span=\"5\" width=\"5\" id=\"column1\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th name=\"tablerowheader\" abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td name=\"tabledataname\" abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>" +
+				//Invalid ordered and unordered list
+				"<ol name=\"hello\" start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+				"<ul type=\"chaos\" id=\"ul1\">unordered</ul>";
   		
   		String p = Jsoup.clean(html, "google.ca", Whitelist.relaxed(),new Document.OutputSettings().prettyPrint(false));
   		//check if clean() keeps all valid html text, removing invalid html
@@ -1568,7 +1592,7 @@ public class JsoupTest {
   				"<i>sure</i> the" +
   				"<strong>cleaner</strong>" +
   				"<u>doesn't</u> remove any stuff." +
-  				"<a href=\"https://www.google.ca\" rel=\"nofollow\">google</a>" +
+  				"<a href=\"https://www.google.ca\">google</a>" +
   				"<blockquote cite=\"http://www.shakespeare.com\">2B|~2B</blockquote>" +
   				"A line break" +
   				"<br />" +
@@ -1577,20 +1601,66 @@ public class JsoupTest {
   				"<dd>A Definition</dd>" +
   				"<dl>Definition list</dl>" +
   				"<li>List</li>" +
-  				"<ol>Ordered List</ol>" +
+  				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				"<q cite=\"google.ca\">quote</q>" +
+  				//Disallowed protocol for q
+  				"<q>quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
   				"<sup>erman</sup>" +
-  				"<ul>unordered</ul>" +
-  				//Image Tag with allowed attributes and protocols
+  				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
-				//Disallowed tags and img tags with disallowed attributes
-  				"tag" +
-				"<img align=\"left\" />",p);
+  			//More tags and attributes allowed in relaxed mode
+				
+				"<div>division</div>" +
+				"<h1>header1</h1>" +
+				"<h2>header1</h2>" +
+				"<h3>header1</h3>" +
+				"<h4>header1</h4>" +
+				"<h5>header1</h5>" +
+				"<h6>header1</h6>" +
+  			//Table
+			"<table summary=\"data\" width=\"5\">" +
+			"<caption>sentence</caption>" +
+			"<colgroup span=\"5\" width=\"5\">" +
+				"<col span=\"5\" width=\"5\" />" +
+			"</colgroup>" +
+			"<thead>" +
+				"<tr>" +
+					"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+				"</tr>" +
+			"</thead>" +
+				"<tbody>" +
+					"<tr>" +
+						"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+					"</tr>" +
+				"</tbody>" +
+			"<tfoot>foottable</tfoot>" +
+			"</table>" +
+			//Invalid tags while keeping valid ones
+			"tag" +
+			//Invalid table attributes
+			"<table summary=\"data\" width=\"5\">" +
+			"<caption>sentence</caption>" +
+			"<colgroup span=\"5\" width=\"5\">" +
+				"<col span=\"5\" width=\"5\" />" +
+			"</colgroup>" +
+			"<thead>" +
+				"<tr>" +
+					"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+				"</tr>" +
+			"</thead>" +
+				"<tbody>" +
+					"<tr>" +
+						"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+					"</tr>" +
+				"</tbody>" +
+			"<tfoot>foottable</tfoot>" +
+			"</table>" +
+			"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+			"<ul type=\"chaos\">unordered</ul>",p);
   	}
   	
   	@Test
@@ -1611,23 +1681,71 @@ public class JsoupTest {
   				"<dd>A Definition</dd>" +
   				"<dl>Definition list</dl>" +
   				"<li>List</li>" +
-  				"<ol>Ordered List</ol>" +
+  				//Added attributes to ol
+  				"<ol start=\"beginning\" type=\"linked\">Ordered List</ol>" +
   				"<p>Paragraph</p>" +
   				"<pre>preformatted</pre>" +
-  				"<q cite='google.ca'>quote</q>" +
+  				//disallowed protocol for q cite
+  				"<q cite=\"invalid://www.google.ca\">quote</q>" +
   				"<small>smalltext</small>" +
   				"<strike>you're out!</strike>" +
   				"<sub>zero</sub>" +
   				"<sup>erman</sup>" +
-  				"<ul>unordered</ul>" +
-  				//Image Tag with allowed attributes and protocols
+  				//Added attributes to ul
+  				"<ul type=\"chaos\">unordered</ul>" +
   				"<img align=\"left\" alt=\"top\" height=\"100\" src=\"http://google.ca\" title=\"img01\" width=\"100\" />" +
-  				//Disallowed tags and img tags with disallowed attributes
-  				"<malicious>tag</malicious>" +
-  				"<img name=\"notallowed\" id=\"image1\" align=\"left\" />";
+  				//More tags and attributes allowed in relaxed mode
+  				
+  				"<div>division</div>" +
+  				"<h1>header1</h1>" +
+  				"<h2>header1</h2>" +
+  				"<h3>header1</h3>" +
+  				"<h4>header1</h4>" +
+  				"<h5>header1</h5>" +
+  				"<h6>header1</h6>" +
+	  			//Table
+				"<table summary=\"data\" width=\"5\">" +
+				"<caption>sentence</caption>" +
+				"<colgroup span=\"5\" width=\"5\">" +
+					"<col span=\"5\" width=\"5\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>" +
+				//Invalid tags, attributes or protocols while keeping valid ones
+				"<malicious>tag</malicious>" +
+				//Invalid Table attributes
+				"<table summary=\"data\" width=\"5\" name\"table1\">" +
+				"<caption>sentence</caption>" +
+				"<colgroup span=\"5\" width=\"5\" id=\"columngroup\">" +
+					"<col span=\"5\" width=\"5\" id=\"column1\" />" +
+				"</colgroup>" +
+				"<thead>" +
+					"<tr>" +
+						"<th name=\"tablerowheader\" abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
+					"</tr>" +
+				"</thead>" +
+					"<tbody>" +
+						"<tr>" +
+							"<td name=\"tabledataname\" abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
+						"</tr>" +
+					"</tbody>" +
+				"<tfoot>foottable</tfoot>" +
+				"</table>" +
+				//Invalid ordered and unordered list
+				"<ol name=\"hello\" start=\"beginning\" type=\"linked\">Ordered List</ol>" +
+				"<ul type=\"chaos\" id=\"ul1\">unordered</ul>";
   		//checks if there is invalid html tags, thus will be invalid
   		assertFalse(Jsoup.isValid(html, Whitelist.relaxed()));
   	}
-  	
 	
 }
