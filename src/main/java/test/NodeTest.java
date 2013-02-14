@@ -23,8 +23,6 @@ public class NodeTest {
 	public void tearDown() throws Exception {
 	}
 
-	// TODO : add the tag <br> type of tag
-
 	@Test
 	public void absUrl() {
 		Tag tag = Tag.valueOf("a");
@@ -68,8 +66,7 @@ public class NodeTest {
 	@Test
 	public void insertAfterString() {
 		Document docBefore = Jsoup.parseBodyFragment("<div><p></p></div>");
-		Document docAfter = Jsoup
-				.parseBodyFragment("<div><p></p><br></div>");
+		Document docAfter = Jsoup.parseBodyFragment("<div><p></p><br></div>");
 
 		docBefore.select("p").first().after("<br>");
 		assertEquals(docAfter.body().html(), docBefore.body().html());
@@ -157,8 +154,7 @@ public class NodeTest {
 	@Test
 	public void insertBeforeString() {
 		Document docBefore = Jsoup.parseBodyFragment("<div><p></p></div>");
-		Document docAfter = Jsoup
-				.parseBodyFragment("<div><br><p></p></div>");
+		Document docAfter = Jsoup.parseBodyFragment("<div><br><p></p></div>");
 
 		docBefore.select("p").first().before("<br>");
 		assertEquals(docAfter.body().html(), docBefore.body().html());
@@ -271,48 +267,49 @@ public class NodeTest {
 				.clone();
 		assertEquals(null, nodeWithFatherAndNoDocumentAncestor.ownerDocument());
 	}
-	
+
 	@Test
 	public void parent() {
 		// No parent
-		Tag tag = Tag.valueOf("a");		
+		Tag tag = Tag.valueOf("a");
 		Node noParent = new Element(tag, "");
 		assertEquals(null, noParent.parent());
-		
+
 		// A parent
 		Document parent = Jsoup.parseBodyFragment("<a></a>");
 		Node child = parent.childNode(0);
 		assertEquals(parent, child.parent());
 	}
-	
+
 	@Test
 	public void previousSibling() {
 		// No siblings
 		Document document = Jsoup.parseBodyFragment("<a><div></div></a>");
-		
+
 		Node actual = document.select("div").first().previousSibling();
 		assertEquals(null, actual);
-		
+
 		// A sibling
 		Tag tagSibling = Tag.valueOf("p");
 		Node expected = new Element(tagSibling, "");
-		
+
 		document.select("div").first().before(expected);
 		actual = document.select("div").first().previousSibling();
-		
+
 		assertEquals(expected, actual);
 	}
-	
+
 	@Test
 	public void remove() {
 		// remove an element
-		Document docBefore = Jsoup.parseBodyFragment("<div><p></p><a></a></div>");
+		Document docBefore = Jsoup
+				.parseBodyFragment("<div><p></p><a></a></div>");
 		Document docAfter = Jsoup.parseBodyFragment("<div><p></p></div>");
-		
+
 		docBefore.select("a").first().remove();
 		assertEquals(docAfter.body().html(), docBefore.body().html());
 	}
-	
+
 	@Test
 	public void removeAttr() {
 		// Remove attribute from empty node
@@ -321,12 +318,12 @@ public class NodeTest {
 		Node node = new Element(tag, "", attributes);
 		node.removeAttr("title");
 		assertEquals("", node.attr("title"));
-		
+
 		// Remove attribute from single-attribute node
 		node.attr("title", "test1");
 		node.removeAttr("title");
 		assertEquals("", node.attr("title"));
-		
+
 		// Remove attribute from multi-attribute node
 		node.attr("title", "test2");
 		node.attr("body", "test3");
@@ -334,111 +331,106 @@ public class NodeTest {
 		assertEquals("", node.attr("title"));
 		assertEquals("test3", node.attr("body"));
 	}
-	
+
 	@Test
 	public void replaceWith() {
 		// Replace "p" element with "a" element
 		Tag tagA = Tag.valueOf("a");
 		Element elementA = new Element(tagA, "");
-		
+
 		Document docBefore = Jsoup.parseBodyFragment("<div><p></p></div>");
 		Document docAfter = Jsoup.parseBodyFragment("<div><a></a></div>");
-		
+
 		docBefore.select("p").first().replaceWith(elementA);
-		
+
 		assertEquals(docAfter.body().html(), docBefore.body().html());
 	}
-	
+
 	@Test
 	public void setBaseUri() {
 		// No URI
 		Node node = new Element(Tag.valueOf("a"), "");
 		assertEquals("", node.baseUri());
-		
+
 		// Set the URI
 		node.setBaseUri("/testing");
 		assertEquals("/testing", node.baseUri());
-		
+
 		// Clear the URI
 		node.setBaseUri("");
 		assertEquals("", node.baseUri());
 	}
-	
+
 	@Test(expected = NullPointerException.class)
-	public void siblingIndex() {		
+	public void siblingIndex() {
 		// index #1
 		Document document = new Document("<a><div></div></a>");
-		
+
 		Tag tagSibling = Tag.valueOf("p");
 		Node sibling = new Element(tagSibling, "");
 		document.select("div").first().after(sibling);
-		
+
 		int siblingIndex = sibling.siblingIndex();
 		assertEquals(1, siblingIndex);
-		
+
 		// no siblings
 		Node unfoundSibling = new Element(Tag.valueOf("br"), "");
 		int unfoundIndex = unfoundSibling.siblingIndex();
 		assertEquals(0, unfoundIndex);
 	}
-	
+
 	@Test
 	public void siblingNodes() {
 		// No siblings
 		Document document = Jsoup.parseBodyFragment("<a><div></div></a>");
-		
+
 		Element div = document.select("div").first();
 		List<Element> actual = div.siblingElements();
 		assertEquals(0, actual.size());
-		
+
 		// A sibling
 		Tag tagSibling = Tag.valueOf("p");
 		Element expected = new Element(tagSibling, "");
-		
+
 		document.select("div").first().after(expected);
 		div = document.select("div").first();
 		actual = div.siblingElements();
-		
+
 		assertEquals(1, actual.size());
 		assertEquals(expected, actual.get(0));
 	}
-	
+
 	@Test
 	public void toStringTest() {
 		Tag tag = Tag.valueOf("a");
 		Element element = new Element(tag, "");
-		
+
 		String actual = element.toString();
 		String expected = "<a></a>";
-		
+
 		assertEquals(expected, actual);
 	}
-	
-	// TODO: traverse
-	@Test
-	public void traverse() {
-		fail("Not yet implemented.");
-	}
-	
+
 	@Test
 	public void unwrap() {
 		Document docBefore = Jsoup.parseBodyFragment("<div>1<a>2</a></div>");
 		Document docAfter = Jsoup.parseBodyFragment("<div>12</div>");
-		
+
 		Element elementA = docBefore.select("a").first();
 		elementA.unwrap();
-		
+
 		assertEquals(docAfter.body().html(), docBefore.body().html());
 	}
-	
+
 	@Test
 	public void wrap() {
 		Document docBefore = Jsoup.parseBodyFragment("<div>1<p>2</p></div>");
-		Document docAfter = Jsoup.parseBodyFragment("<div>1<a><p>2</p></a></div>");
-		
+		Document docAfter = Jsoup
+				.parseBodyFragment("<div>1<a><p>2</p></a></div>");
+
 		Element elementP = docBefore.select("p").first();
 		elementP.wrap("<a>");
-		
+
 		assertEquals(docAfter.body().html(), docBefore.body().html());
 	}
 }
