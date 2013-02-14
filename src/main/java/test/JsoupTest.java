@@ -1542,24 +1542,6 @@ public class JsoupTest {
   				"<h4>header1</h4>" +
   				"<h5>header1</h5>" +
   				"<h6>header1</h6>" +
-	  			//Table
-				"<table summary=\"data\" width=\"5\">" +
-				"<caption>sentence</caption>" +
-				"<colgroup span=\"5\" width=\"5\">" +
-					"<col span=\"5\" width=\"5\" />" +
-				"</colgroup>" +
-				"<thead>" +
-					"<tr>" +
-						"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
-					"</tr>" +
-				"</thead>" +
-					"<tbody>" +
-						"<tr>" +
-							"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
-						"</tr>" +
-					"</tbody>" +
-				"<tfoot>foottable</tfoot>" +
-				"</table>" +
 				//Invalid tags, attributes or protocols while keeping valid ones
 				"<malicious>tag</malicious>" +
 				//Invalid Table attributes
@@ -1621,24 +1603,6 @@ public class JsoupTest {
 				"<h4>header1</h4>" +
 				"<h5>header1</h5>" +
 				"<h6>header1</h6>" +
-  			//Table
-			"<table summary=\"data\" width=\"5\">" +
-			"<caption>sentence</caption>" +
-			"<colgroup span=\"5\" width=\"5\">" +
-				"<col span=\"5\" width=\"5\" />" +
-			"</colgroup>" +
-			"<thead>" +
-				"<tr>" +
-					"<th abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\" scope=\"1\">theader</th>" +
-				"</tr>" +
-			"</thead>" +
-				"<tbody>" +
-					"<tr>" +
-						"<td abbr=\"A\" axis=\"X\" colspan=\"5\" rowspan=\"1\" width=\"5\">tabledata</td>" +
-					"</tr>" +
-				"</tbody>" +
-			"<tfoot>foottable</tfoot>" +
-			"</table>" +
 			//Invalid tags while keeping valid ones
 			"tag" +
 			//Invalid table attributes
