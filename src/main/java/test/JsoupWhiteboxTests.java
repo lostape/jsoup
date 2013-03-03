@@ -49,5 +49,30 @@ public class JsoupWhiteboxTests {
 		//Jsoup stops parsing
 		assertEquals("",d.title());
 	}
+	
+	@Test
+	public void RawTextNormalTest() {
+		String html = "<iframe><p>RawText does not parse stuff inside</p></iframe>";
+		Document d = Jsoup.parse(html);
+		
+		assertEquals("<p>RawText does not parse stuff inside</p>", d.body().child(0).text());
+	}
+	
+	@Test
+	public void RawTextNullCharTest() {
+		String html = "<iframe>NullChar\0</iframe>";
+		Document d = Jsoup.parse(html);
+		//Jsoup replaces null character with replacement char
+		assertEquals("NullChar\uFFFD", d.body().child(0).text());
+	}
+	
+	@Test
+	public void RawTextEOFTest() {
+		char eof = (char) -1;
+		String html = "<iframe>"+eof+"Stuff after eof, will not be parsed</iframe>";
+		Document d = Jsoup.parse(html);
+		//Jsoup replaces null character with replacement char
+		assertEquals("", d.body().child(0).text());
+	}
 
 }
