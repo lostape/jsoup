@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.DocumentType;
 import org.jsoup.nodes.Element;
 import org.junit.Test;
 
@@ -463,6 +464,192 @@ public class JsoupWhiteboxTests {
 		assertEquals("", ((Comment) d.childNode(0)).getData());
 		assertEquals("\uFFFDNullComment\uFFFDasdf-asdf-\uFFFD--\uFFFD--asdf---", ((Comment) d.childNode(1)).getData());
 		assertEquals("CommentBang--!--!asdf--!\uFFFD", ((Comment) d.childNode(2)).getData());
+	}
+	
+	//Doctype tests
+	
+	@Test
+	public void DoctypeWithBothPublicAndSystemKeywordsDoubleQuoted(){
+		String html = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f PUBLIC\"\0Null\"\t\t\n\r\f \"\0Null\"\t\n\f\r >";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("html\uFFFD9", t.attr("name"));
+		assertEquals("\uFFFDNull", t.attr("publicId"));
+		assertEquals("\uFFFDNull", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeWithSystemDoubleQuoted(){
+		String html = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\"\0Null\"\t\t\n\r\f >";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("html\uFFFD9", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("\uFFFDNull", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeWithSystemClosingAbruptly(){
+		String html = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM>";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("html\uFFFD9", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeWithSystemKeyword(){
+		String html = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t\t\n\r\f \"double\">";
+		String single = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t 'single'>";
+		String ret = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\r>";
+		String formfeed = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\f>";
+		String newline = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\n>";
+		String bogus = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM bogus>";
+		String doubleendquick = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t\t\n\r\f \">";
+		String singlenull = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t\t\n\r\f '\0Null'>";
+		String singleendquick = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t\t\n\r\f '>";
+		String nowhitesinglequote = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM'single'>";
+		String elsecase = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM1234>";
+		String weirdstuffafter = "<!DOCTYPE\t\t\r\n\f html\09\t\r\n\f SYSTEM\t\t\n\r\f \"weirdstuffcoming\"Weirdstuff>";
+		
+		Document a = Jsoup.parse(html);
+		DocumentType t = (DocumentType) a.childNode(0);
+		
+		Document b = Jsoup.parse(single);
+		DocumentType t2 = (DocumentType) b.childNode(0);
+		
+		Document c = Jsoup.parse(ret);
+		DocumentType t3 = (DocumentType) c.childNode(0);
+		
+		Document d = Jsoup.parse(formfeed);
+		DocumentType t4 = (DocumentType) d.childNode(0);
+		
+		Document e = Jsoup.parse(newline);
+		DocumentType t5 = (DocumentType) e.childNode(0);
+		
+		Document f = Jsoup.parse(bogus);
+		DocumentType t6 = (DocumentType) f.childNode(0);
+		
+		Document g = Jsoup.parse(doubleendquick);
+		DocumentType t7 = (DocumentType) g.childNode(0);
+		
+		Document h = Jsoup.parse(singlenull);
+		DocumentType t8 = (DocumentType) h.childNode(0);
+		
+		Document i = Jsoup.parse(singleendquick);
+		DocumentType t9 = (DocumentType) i.childNode(0);
+		
+		Document j = Jsoup.parse(nowhitesinglequote);
+		DocumentType t10 = (DocumentType) i.childNode(0);
+		
+		Document k = Jsoup.parse(elsecase);
+		DocumentType t11 = (DocumentType) k.childNode(0);
+		
+		Document l = Jsoup.parse(weirdstuffafter);
+		DocumentType t12 = (DocumentType) l.childNode(0);
+		
+		assertEquals("html\uFFFD9", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("double", t.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t2.attr("name"));
+		assertEquals("", t2.attr("publicId"));
+		assertEquals("single", t2.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t3.attr("name"));
+		assertEquals("", t3.attr("publicId"));
+		assertEquals("", t3.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t4.attr("name"));
+		assertEquals("", t4.attr("publicId"));
+		assertEquals("", t4.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t5.attr("name"));
+		assertEquals("", t5.attr("publicId"));
+		assertEquals("", t5.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t6.attr("name"));
+		assertEquals("", t6.attr("publicId"));
+		assertEquals("", t6.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t7.attr("name"));
+		assertEquals("", t7.attr("publicId"));
+		assertEquals("", t7.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t8.attr("name"));
+		assertEquals("", t8.attr("publicId"));
+		assertEquals("\uFFFDNull", t8.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t9.attr("name"));
+		assertEquals("", t9.attr("publicId"));
+		assertEquals("", t9.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t10.attr("name"));
+		assertEquals("", t10.attr("publicId"));
+		assertEquals("single", t10.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t11.attr("name"));
+		assertEquals("", t11.attr("publicId"));
+		assertEquals("", t11.attr("systemId"));
+		
+		assertEquals("html\uFFFD9", t12.attr("name"));
+		assertEquals("", t12.attr("publicId"));
+		assertEquals("weirdstuffcoming", t12.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeClosedAbruptly(){
+		String html = "<!DOCTYPE html >";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("html", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeEndsAbruptly(){
+		String html = "<!DOCTYPE html ";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("html", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeNullBeforeName(){
+		String html = "<!DOCTYPE \0Null>";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("\uFFFDNull", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("", t.attr("systemId"));
+	}
+	
+	@Test
+	public void DoctypeNumbersBeforeName(){
+		String html = "<!DOCTYPE 1234Numbers>";
+		
+		Document d = Jsoup.parse(html);
+		DocumentType t = (DocumentType) d.childNode(0);
+		
+		assertEquals("1234numbers", t.attr("name"));
+		assertEquals("", t.attr("publicId"));
+		assertEquals("", t.attr("systemId"));
 	}
 	
 }
