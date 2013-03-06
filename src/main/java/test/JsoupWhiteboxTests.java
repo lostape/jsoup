@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.Test;
@@ -374,7 +375,7 @@ public class JsoupWhiteboxTests {
 	
 	@Test
 	public void AttributeWeirdNames() {
-		String html = "<tag ==equals \0<\"\\=weird1 \"=weird2 \\=w3 <=w4 name=normal endname/>";
+		String html = "<tag \t\n\r\f ==equals \0<\"\\=weird1 \"=weird2 \\=w3 <=w4 name\t\n\r\f\t=normal endname/>";
 		Document d = Jsoup.parse(html);
 		
 		Element e = d.body().child(0);
@@ -406,6 +407,62 @@ public class JsoupWhiteboxTests {
 		assertEquals("", e.attr("<2"));
 		assertEquals("", e.attr("endname"));
 		assertEquals("normal", e.attr("name"));
+	}
+	
+	@Test
+	public void AttributeBeforeAttributeValueTest() {
+		String html = "<tag a=\t\n\r\f \"&#62\"\t b=\"&\"\n c=\"\0\"\f d=&\t\n\r\f #62 e='three'\r f=\0Null\0 g=<=` " +
+				"i='&#62' j='&gt' k='\0' l=&gt m=&\"\\<=` n=>";
+		Document d = Jsoup.parse(html);
+		
+		Element e = d.body().child(0);
+		assertEquals("tag", e.tagName());
+		assertEquals(">", e.attr("a"));
+		assertEquals("&", e.attr("b"));
+		assertEquals("\uFFFD", e.attr("c"));
+		assertEquals("&", e.attr("d"));
+		assertEquals("three", e.attr("e"));
+		assertEquals("\uFFFDNull\uFFFD", e.attr("f"));
+		assertEquals("<=`", e.attr("g"));
+		assertEquals(">", e.attr("i"));
+		assertEquals(">", e.attr("j"));
+		assertEquals("\uFFFD", e.attr("k"));
+		assertEquals(">", e.attr("l"));
+		assertEquals("&\"\\<=`", e.attr("m"));
+		assertEquals("", e.attr("n"));
+	}
+	
+	@Test
+	public void SelfClosingTagStartTest(){
+		String html = "<tag /fakeoutselfclosingtag=hello />";
+		
+		Document d = Jsoup.parse(html);
+		assertEquals("hello", d.body().child(0).attr("/fakeoutselfclosingtag"));	
+	}
+	
+	//Markup Tests
+	//Comment tests
+	
+	@Test
+	public void CommentCommentStartDashTest(){
+		String html = "<!----><!----I'm a comment--><!----\0Null-->";
+		
+		Document d = Jsoup.parse(html);
+		
+		assertEquals("", ((Comment) d.childNode(0)).getData());
+		assertEquals("I'm a comment", ((Comment) d.childNode(1)).getData());
+		assertEquals("\uFFFDNull", ((Comment) d.childNode(2)).getData());
+	}
+	
+	@Test
+	public void CommentCommentTest(){
+		String html = "<!--><!--\0NullComment\0asdf-asdf-\0--\0--asdf-----><!--CommentBang--!--!asdf--!\0--!>";
+		
+		Document d = Jsoup.parse(html);
+		
+		assertEquals("", ((Comment) d.childNode(0)).getData());
+		assertEquals("\uFFFDNullComment\uFFFDasdf-asdf-\uFFFD--\uFFFD--asdf---", ((Comment) d.childNode(1)).getData());
+		assertEquals("CommentBang--!--!asdf--!\uFFFD", ((Comment) d.childNode(2)).getData());
 	}
 	
 }
