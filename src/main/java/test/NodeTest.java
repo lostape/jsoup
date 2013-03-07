@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
+import org.jsoup.nodes.Document.OutputSettings;
 import org.jsoup.parser.*;
 
 public class NodeTest {
@@ -48,6 +49,28 @@ public class NodeTest {
 				attributes);
 		assertEquals("", hrefElInvalidUri.absUrl("relHref"));
 		assertEquals("http://google.com/", hrefElInvalidUri.absUrl("absHref"));
+	}
+	
+	@Test
+	public void absUrlWithNoAttribute() {
+		Tag tag = Tag.valueOf("a");
+		Attributes attributes = new Attributes();
+
+		Element hrefElNoUri = new Element(tag, "", attributes);
+		assertEquals("", hrefElNoUri.absUrl("href"));
+	}
+	
+	@Test
+	public void absUrlWithExclamationMarkInAttributeAndBaseURI() {
+		Tag tag = Tag.valueOf("a");
+		// Testing for relative href and absolute href
+		Attributes attributes = new Attributes();
+		attributes.put("href", "?example");
+		//attributes.put("absHref", "http://google.com/");
+
+		Element hrefWithUri = new Element(tag, "https://google.com",
+				attributes);
+		assertEquals("https://google.com/?example", hrefWithUri.absUrl("href"));
 	}
 
 	@Test
@@ -197,6 +220,23 @@ public class NodeTest {
 		assertEquals(3, children.body().childNodeSize());
 		assertEquals(listNodes, children.body().childNodes());
 	}
+	
+	@Test
+	public void childNodesCopy() {
+		/* Tests both childNodes and childNodeSize functions */
+		// No children
+		Document noChild = Jsoup.parseBodyFragment("");
+		assertEquals(0, noChild.body().childNodeSize());
+		assertEquals(new ArrayList<Node>(), noChild.body().childNodes());
+		// Some children
+		Document children = Jsoup
+				.parseBodyFragment("<div></div><p></p><a></a>");
+		List<Node> listNodes = new ArrayList<Node>();
+		listNodes.add(children.body().childNode(0));
+		listNodes.add(children.body().childNode(1));
+		listNodes.add(children.body().childNode(2));
+		assertEquals(listNodes.toString(), children.body().childNodesCopy().toString());
+	}
 
 	@Test
 	public void cloneNode() {
@@ -221,6 +261,25 @@ public class NodeTest {
 		// Tests for one attribute
 		attributes.put("title", "testing");
 		assertEquals(true, node.hasAttr("title"));
+	}
+	
+	@Test
+	public void hasAttrWithSemicolonPrefix() {
+		Tag tag = Tag.valueOf("a");
+		Attributes attributes = new Attributes();
+		attributes.put("title", "hello");
+		// An attribute
+		Node nodeWithAbsURIAndAttribute = new Element(tag, "https://google.com/", attributes);
+		assertEquals(true, nodeWithAbsURIAndAttribute.hasAttr("abs:title"));
+		Node nodeNoAbsURIAndAttribute = new Element(tag, "", attributes);
+		assertEquals(false, nodeNoAbsURIAndAttribute.hasAttr("abs:title"));
+		
+		// No attribute
+		attributes = new Attributes();
+		Node nodeWithAbsURIAndNoAttribute = new Element(tag, "https://google.com/", attributes);
+		assertEquals(false, nodeWithAbsURIAndNoAttribute.hasAttr("abs:title"));
+		Node nodeNoAbsURIAndNoAttribute = new Element(tag, "", attributes);
+		assertEquals(false, nodeNoAbsURIAndNoAttribute.hasAttr("abs:title"));
 	}
 
 	@Test
@@ -283,20 +342,18 @@ public class NodeTest {
 
 	@Test
 	public void previousSibling() {
-		// No siblings
-		Document document = Jsoup.parseBodyFragment("<a><div></div></a>");
-
-		Node actual = document.select("div").first().previousSibling();
-		assertEquals(null, actual);
-
-		// A sibling
-		Tag tagSibling = Tag.valueOf("p");
-		Node expected = new Element(tagSibling, "");
-
-		document.select("div").first().before(expected);
-		actual = document.select("div").first().previousSibling();
-
-		assertEquals(expected, actual);
+		Tag tag = Tag.valueOf("a");
+		Attributes attributes = new Attributes();
+		Node node = new Element(tag, "", attributes);
+		// Test for a stand alone node
+		assertEquals(null, node.previousSibling());
+		// Test for a node that has another sibling after it
+		Element siblings = Jsoup.parseBodyFragment("<div><p></p><a></a></div>")
+				.body();
+		assertEquals(siblings.select("p").first(), siblings.select("a").first()
+				.previousSibling());
+		assertEquals(null, siblings.select("p").first()
+				.previousSibling());
 	}
 
 	@Test
@@ -399,11 +456,31 @@ public class NodeTest {
 		assertEquals(1, actual.size());
 		assertEquals(expected, actual.get(0));
 	}
+	
+	@Test
+	public void siblingNodesWhiteBoxTesting() {
+		// No siblings
+		Tag tagSibling = Tag.valueOf("div");
+
+		Element div = new Element(tagSibling, "");
+		List<Node> actual = div.siblingNodes();
+		assertEquals(new ArrayList<Node>(), actual);
+
+		// A sibling
+		tagSibling = Tag.valueOf("p");
+		Element expected = new Element(tagSibling, "");
+
+		Document document = Jsoup.parseBodyFragment("<a><div></div></a>");
+		document.select("div").first().after(expected);
+		div = document.select("div").first();
+		actual = div.siblingNodes();
+		assertEquals(expected, actual.get(0));
+	}
 
 	@Test
 	public void toStringTest() {
 		Tag tag = Tag.valueOf("a");
-		Element element = new Element(tag, "");
+		Node element = new Element(tag, "");
 
 		String actual = element.toString();
 		String expected = "<a></a>";
@@ -413,6 +490,7 @@ public class NodeTest {
 
 	@Test
 	public void unwrap() {
+		// Normal wrap
 		Document docBefore = Jsoup.parseBodyFragment("<div>1<a>2</a></div>");
 		Document docAfter = Jsoup.parseBodyFragment("<div>12</div>");
 
@@ -420,17 +498,57 @@ public class NodeTest {
 		elementA.unwrap();
 
 		assertEquals(docAfter.body().html(), docBefore.body().html());
+		
+		// No parent unwrap
+		docBefore = Jsoup.parseBodyFragment("<a></a>");
+		docAfter = Jsoup.parseBodyFragment("");
+		
+		Element noParentElement = docBefore.select("a").first();
+		noParentElement.unwrap();
+		
+		assertEquals(docAfter.body().html(), docBefore.body().html());
 	}
 
 	@Test
 	public void wrap() {
+		// Normal wrap
 		Document docBefore = Jsoup.parseBodyFragment("<div>1<p>2</p></div>");
 		Document docAfter = Jsoup
 				.parseBodyFragment("<div>1<a><p>2</p></a></div>");
-
 		Element elementP = docBefore.select("p").first();
 		elementP.wrap("<a>");
 
 		assertEquals(docAfter.body().html(), docBefore.body().html());
+		
+		// Two argument wrap
+		docBefore = Jsoup.parseBodyFragment("<div></div>");
+		docAfter = Jsoup.parseBodyFragment("<a><div></div><p></p></a>");
+		elementP = docBefore.select("div").first();
+		elementP.wrap("<a></a><p></p>");
+		
+		assertEquals(docAfter.body().html(), docBefore.body().html());
+		
+		// Invalid tag wrap
+		docBefore = Jsoup.parseBodyFragment("<div></div>");
+		docAfter = Jsoup.parseBodyFragment("<div></div>");
+		elementP = docBefore.select("div").first();
+		elementP.wrap("1");
+		
+		assertEquals(docAfter.body().html(), docBefore.body().html());
+	}
+	
+	@Test(expected=NullPointerException.class)
+	public void wrap_noParent() {
+		// No parent wrap
+		Tag tag = Tag.valueOf("a");
+		Node noParentElement = new Element(Tag.valueOf("a"), "");
+		try
+		{
+			noParentElement.wrap("<a>");
+		}
+		catch (NullPointerException e)
+		{
+			throw e;
+		}
 	}
 }
