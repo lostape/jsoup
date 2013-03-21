@@ -122,7 +122,7 @@ public class NodeTestMutation {
 		Node noParentElement = new Element(Tag.valueOf("a"), "");
 		try
 		{
-			noParentElement.wrap(null);
+			noParentElement.wrap("");
 			fail();
 		}
 		catch (IllegalArgumentException e)
