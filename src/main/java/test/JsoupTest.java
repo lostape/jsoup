@@ -22,10 +22,15 @@ import org.jsoup.parser.Parser;
 import org.jsoup.parser.XmlTreeBuilder;
 import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class JsoupTest {
-
+	
+	@Rule
+    public Timeout globalTimeout = new Timeout(500);
+	
 	@Test
 	public void plaintextTest() throws IOException{
 		File plaintext = new File("testres/invalidhtml/plaintext.html");
@@ -192,14 +197,17 @@ public class JsoupTest {
 	
 	@Test
 	public void nospacesbetweenattributesTest() throws IOException{
-		File plaintext = new File("testres/invalidhtml/nospacebetweenattr.html");
+		String html = "<a href=\"http://www.google.ca\"id=\"nospacebetweenattributes\">No space between attributes</a>";
 		//Takes invalid text and normalizes into correct html file
-		Document p = Jsoup.parse(plaintext, "UTF-8");
+		Parser p = Parser.htmlParser();
+		p.setTrackErrors(10);
+		Document d = Jsoup.parse(html,"",p);
 		
 		//Check if correctly parses attribute values even with no spaces between attributes
-		assertEquals("a",p.body().child(0).tagName());
-		assertEquals("http://www.google.ca",p.body().child(0).attr("href"));
-		assertEquals("nospacebetweenattributes",p.body().child(0).attr("id"));
+		assertEquals("Unexpected character 'd' in input state [AfterAttributeValue_quoted]",p.getErrors().get(0).getErrorMessage());
+		assertEquals("a",d.body().child(0).tagName());
+		assertEquals("http://www.google.ca",d.body().child(0).attr("href"));
+		assertEquals("nospacebetweenattributes",d.body().child(0).attr("id"));
 	}
 	
 	//Valid HTML Tests

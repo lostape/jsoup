@@ -1,6 +1,5 @@
 package test;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -9,12 +8,17 @@ import org.jsoup.helper.StringUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
-import org.jsoup.parser.Parser;
 import org.jsoup.parser.*;
 import org.jsoup.select.Elements;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 public class HtmlTreeBuilderStateTest{
+	
+	@Rule
+    public Timeout globalTimeout = new Timeout(500);
+	
   	public static String stripNewlines(String text) {
 	        text = text.replaceAll("\\n\\s*", "");
 	        return text;
@@ -67,8 +71,11 @@ public class HtmlTreeBuilderStateTest{
 	        assertEquals("<html><head><noscript></noscript></head><body><img src=\"foo\" /><p>Hello</p></body></html>", 
 	        		stripNewlines(doc1.html()));
 	        
+	        Parser p = Parser.htmlParser();
+	        p.setTrackErrors(10);
 	        Document doc2 = Jsoup.parse("<!DOCTYPE html><!DOCTYPE html><html><head><title>Title of the document</title></head>" +
-	        		"<body>The content of the document......</body></html>");
+	        		"<body>The content of the document......</body></html>","",p);
+	        assertEquals("",p.getErrors().get(0).getErrorMessage());
 	        assertEquals("The content of the document......", 
 	        		stripNewlines(doc2.body().html()));
 	        

@@ -7,7 +7,9 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -16,6 +18,9 @@ import org.jsoup.parser.*;
 
 public class NodeTest {
 
+	@Rule
+    public Timeout globalTimeout = new Timeout(500);
+	
 	@Before
 	public void setUp() throws Exception {
 	}
