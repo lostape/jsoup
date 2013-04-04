@@ -28,13 +28,22 @@ public class NodeTraversorTest {
 	}
 	
 	@Test
-	public void first() {
+	public void ValidHTML() {
 		Document doc = Jsoup.parseBodyFragment("<div><p></p><a></a></div>");
 		Node htmlTree = doc.select("div").first();
 		toString toString = new toString();
 		NodeTraversor nt = new NodeTraversor(toString);
 		nt.traverse(htmlTree);
 		assertEquals("<div><p></p><a></a></div>", string);
+	}
+	
+	@Test
+	public void NullNode() {
+		Node htmlTree = null;
+		toString toString = new toString();
+		NodeTraversor nt = new NodeTraversor(toString);
+		nt.traverse(htmlTree);
+		assertEquals("", string);
 	}
 		
 }
